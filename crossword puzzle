@@ -1,0 +1,135 @@
+import java.util.*;
+
+public class Solution {
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        char[][] grid = new char[10][10];
+
+        // read the 10x10 grid
+        for (int i = 0; i < 10; i++) {
+            String line = sc.nextLine();
+            grid[i] = line.toCharArray();
+        }
+
+        // read the words
+        String[] words = sc.nextLine().split(";");
+
+        // solve the crossword
+        solve(grid, words, 0);
+
+        // print the filled grid
+        for (int i = 0; i < 10; i++) {
+            System.out.println(new String(grid[i]));
+        }
+        sc.close();
+    }
+
+    // Recursive solver
+    private static boolean solve(char[][] grid, String[] words, int index) {
+        if (index == words.length)
+            return true; // all words placed
+
+        String word = words[index];
+
+        for (int i = 0; i < 10; i++) {
+            for (int j = 0; j < 10; j++) {
+
+                // Try horizontal placement
+                if (canPlaceHorizontally(grid, word, i, j)) {
+                    boolean[] mark = placeHorizontally(grid, word, i, j);
+                    if (solve(grid, words, index + 1))
+                        return true;
+                    unplaceHorizontally(grid, i, j, mark);
+                }
+
+                // Try vertical placement
+                if (canPlaceVertically(grid, word, i, j)) {
+                    boolean[] mark = placeVertically(grid, word, i, j);
+                    if (solve(grid, words, index + 1))
+                        return true;
+                    unplaceVertically(grid, i, j, mark);
+                }
+            }
+        }
+        return false; // no valid placement
+    }
+
+    // Check if a word can be placed horizontally
+    private static boolean canPlaceHorizontally(char[][] grid, String word, int row, int col) {
+        if (col + word.length() > 10)
+            return false;
+
+        if (col > 0 && grid[row][col - 1] != '+')
+            return false;
+
+        if (col + word.length() < 10 && grid[row][col + word.length()] != '+')
+            return false;
+
+        for (int i = 0; i < word.length(); i++) {
+            char ch = grid[row][col + i];
+            if (ch != '-' && ch != word.charAt(i))
+                return false;
+        }
+        return true;
+    }
+
+    // Check if a word can be placed vertically
+    private static boolean canPlaceVertically(char[][] grid, String word, int row, int col) {
+        if (row + word.length() > 10)
+            return false;
+
+        if (row > 0 && grid[row - 1][col] != '+')
+            return false;
+
+        if (row + word.length() < 10 && grid[row + word.length()][col] != '+')
+            return false;
+
+        for (int i = 0; i < word.length(); i++) {
+            char ch = grid[row + i][col];
+            if (ch != '-' && ch != word.charAt(i))
+                return false;
+        }
+        return true;
+    }
+
+    // Place word horizontally
+    private static boolean[] placeHorizontally(char[][] grid, String word, int row, int col) {
+        boolean[] mark = new boolean[word.length()];
+        for (int i = 0; i < word.length(); i++) {
+            if (grid[row][col + i] == '-') {
+                grid[row][col + i] = word.charAt(i);
+                mark[i] = true;
+            }
+        }
+        return mark;
+    }
+
+    // Unplace horizontally (backtrack)
+    private static void unplaceHorizontally(char[][] grid, int row, int col, boolean[] mark) {
+        for (int i = 0; i < mark.length; i++) {
+            if (mark[i])
+                grid[row][col + i] = '-';
+        }
+    }
+
+    // Place word vertically
+    private static boolean[] placeVertically(char[][] grid, String word, int row, int col) {
+        boolean[] mark = new boolean[word.length()];
+        for (int i = 0; i < word.length(); i++) {
+            if (grid[row + i][col] == '-') {
+                grid[row + i][col] = word.charAt(i);
+                mark[i] = true;
+            }
+        }
+        return mark;
+    }
+
+    // Unplace vertically (backtrack)
+    private static void unplaceVertically(char[][] grid, int row, int col, boolean[] mark) {
+        for (int i = 0; i < mark.length; i++) {
+            if (mark[i])
+                grid[row + i][col] = '-';
+        }
+    }
+}

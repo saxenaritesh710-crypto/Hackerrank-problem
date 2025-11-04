@@ -1,0 +1,104 @@
+import java.util.*;
+
+public class Solution {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        int n = sc.nextInt();
+        int[] posts = new int[n];
+        for (int i = 0; i < n; i++) {
+            // convert to 0-based rod numbering
+            posts[i] = sc.nextInt() - 1;
+        }
+        sc.close();
+
+        int startState = encode(posts, n);
+        int goalState = encode(new int[n], n);  // all zeros meaning rod 0 for all
+        // (assuming we want rod 1 => index 0)
+        // Note: if goal is rod=1 (index 0), we use new int[n] (all zero)
+
+        if (startState == goalState) {
+            System.out.println(0);
+            return;
+        }
+
+        int result = bfsMinMoves(n, startState, goalState);
+        System.out.println(result);
+    }
+
+    // encode the array of rod positions into an integer state
+    private static int encode(int[] posts, int n) {
+        int state = 0;
+        for (int i = 0; i < n; i++) {
+            state = (state << 2) | (posts[i] & 3);
+            // since rods numbered 0..3, 2 bits per disk
+        }
+        return state;
+    }
+
+    // decode if needed (not strictly needed in BFS generation if we operate on bits directly)
+    private static int[] decode(int state, int n) {
+        int[] posts = new int[n];
+        for (int i = n - 1; i >= 0; i--) {
+            posts[i] = state & 3;
+            state >>= 2;
+        }
+        return posts;
+    }
+
+    private static int bfsMinMoves(int n, int start, int goal) {
+        int maxStates = 1 << (2 * n);  // up to 4^n states
+        boolean[] visited = new boolean[maxStates];
+        Queue<Integer> queue = new ArrayDeque<>();
+        Queue<Integer> distQ = new ArrayDeque<>();
+
+        visited[start] = true;
+        queue.add(start);
+        distQ.add(0);
+
+        while (!queue.isEmpty()) {
+            int cur = queue.poll();
+            int dist = distQ.poll();
+
+            int[] posts = decode(cur, n);
+            // compute top disk index (smallest disk number) on each rod
+            int[] topDisk = new int[4];
+            Arrays.fill(topDisk, Integer.MAX_VALUE);
+            for (int i = 0; i < n; i++) {
+                int rod = posts[i];
+                if (i + 1 < topDisk[rod]) {
+                    topDisk[rod] = i + 1;  // disk sizes: i+1
+                }
+            }
+            // for each rod from which we can move top disk (if any)
+            for (int from = 0; from < 4; from++) {
+                if (topDisk[from] == Integer.MAX_VALUE) continue;  // no disk on this rod
+                int disk = topDisk[from] - 1;  // index in array
+                for (int to = 0; to < 4; to++) {
+                    if (to == from) continue;
+                    // check if move to rod "to" is legal:
+                    // either rod "to" empty or its top disk size > this disk size
+                    if (topDisk[to] > topDisk[from]) {
+                        // simulate move
+                        int oldRod = posts[disk];
+                        posts[disk] = to;
+                        int nextState = encode(posts, n);
+                        // revert
+                        posts[disk] = oldRod;
+
+                        if (!visited[nextState]) {
+                            if (nextState == goal) {
+                                return dist + 1;
+                            }
+                            visited[nextState] = true;
+                            queue.add(nextState);
+                            distQ.add(dist + 1);
+                        }
+                    }
+                }
+            }
+        }
+
+        // theoretically always reachable so should never get here
+        return -1;
+    }
+}

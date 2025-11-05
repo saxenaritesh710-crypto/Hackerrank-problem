@@ -1,0 +1,66 @@
+import java.util.*;
+
+public class Solution {
+    static class Point {
+        int x, y, moves;
+        Point(int x, int y, int moves) {
+            this.x = x;
+            this.y = y;
+            this.moves = moves;
+        }
+    }
+
+    public static int minimumMoves(String[] grid, int startX, int startY, int goalX, int goalY) {
+        int n = grid.length;
+        boolean[][] visited = new boolean[n][n];
+        Queue<Point> queue = new LinkedList<>();
+        queue.add(new Point(startX, startY, 0));
+        visited[startX][startY] = true;
+
+        int[] dx = {-1, 1, 0, 0};
+        int[] dy = {0, 0, -1, 1};
+
+        while (!queue.isEmpty()) {
+            Point p = queue.poll();
+
+            if (p.x == goalX && p.y == goalY)
+                return p.moves;
+
+            for (int dir = 0; dir < 4; dir++) {
+                int nx = p.x + dx[dir];
+                int ny = p.y + dy[dir];
+
+                // Move in a direction until hitting a wall or edge
+                while (nx >= 0 && nx < n && ny >= 0 && ny < n && grid[nx].charAt(ny) == '.') {
+                    if (!visited[nx][ny]) {
+                        visited[nx][ny] = true;
+                        queue.add(new Point(nx, ny, p.moves + 1));
+                    }
+                    nx += dx[dir];
+                    ny += dy[dir];
+                }
+            }
+        }
+
+        return -1; // If not reachable
+    }
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        int n = sc.nextInt();
+        sc.nextLine();
+
+        String[] grid = new String[n];
+        for (int i = 0; i < n; i++) {
+            grid[i] = sc.nextLine();
+        }
+
+        int startX = sc.nextInt();
+        int startY = sc.nextInt();
+        int goalX = sc.nextInt();
+        int goalY = sc.nextInt();
+
+        System.out.println(minimumMoves(grid, startX, startY, goalX, goalY));
+        sc.close();
+    }
+}

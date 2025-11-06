@@ -1,0 +1,72 @@
+'use strict';
+
+process.stdin.resume();
+process.stdin.setEncoding('utf-8');
+let inputString = '';
+process.stdin.on('data', data => inputString += data);
+process.stdin.on('end', () => {
+    const tokens = inputString.trim().split(/\s+/);
+    let idx = 0;
+    const m = parseInt(tokens[idx++], 10);
+    const n = parseInt(tokens[idx++], 10);
+    const grid = [];
+    for (let i = 0; i < m; i++) {
+        grid.push(tokens[idx++]);
+    }
+    const result = kMarsh(grid, m, n);
+    console.log(result);
+});
+
+function kMarsh(grid, m, n) {
+    // down[i][j] = number of consecutive good cells from (i,j) downward
+    const down = Array.from({ length: m }, () => new Array(n).fill(0));
+
+    // fill the down table
+    for (let j = 0; j < n; j++) {
+        let run = 0;
+        for (let i = m - 1; i >= 0; i--) {
+            if (grid[i][j] === '.') {
+                run++;
+            } else {
+                run = 0;
+            }
+            down[i][j] = run;
+        }
+    }
+
+    let maxPerimeter = 0;
+
+    // pick top row
+    for (let top = 0; top < m; top++) {
+        // pick bottom row (must be >= top + 1 to form a rectangle of height >= 2)
+        for (let bottom = top + 1; bottom < m; bottom++) {
+            const height = bottom - top + 1;
+            let width = 0;
+
+            for (let j = 0; j < n; j++) {
+                if (down[top][j] >= height) {
+                    // this column j is good through rows top..bottom
+                    width++;
+                } else {
+                    // break the current run of width
+                    if (width >= 2) {
+                        const perim = 2 * (height + width);
+                        if (perim > maxPerimeter) {
+                            maxPerimeter = perim;
+                        }
+                    }
+                    width = 0;
+                }
+            }
+            // check at end of row
+            if (width >= 2) {
+                const perim = 2 * (height + width);
+                if (perim > maxPerimeter) {
+                    maxPerimeter = perim;
+                }
+            }
+        }
+    }
+
+    return maxPerimeter > 0 ? maxPerimeter : 'impossible';
+}

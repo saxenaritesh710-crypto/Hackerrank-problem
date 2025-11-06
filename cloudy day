@@ -1,0 +1,83 @@
+'use strict';
+
+function maximumPeople(p, x, y, r) {
+    const n = p.length;
+    const m = y.length;
+
+    // Combine towns by location (if duplicates exist)
+    const townMap = new Map();
+    for (let i = 0; i < n; i++) {
+        townMap.set(x[i], (townMap.get(x[i]) || 0) + p[i]);
+    }
+    const towns = Array.from(townMap.entries())
+        .sort((a, b) => a[0] - b[0]); // [ [location, population], ...]
+
+    // Prepare cloud start and end events
+    const clouds = [];
+    for (let j = 0; j < m; j++) {
+        clouds.push({
+            id: j,
+            start: y[j] - r[j],
+            end: y[j] + r[j]
+        });
+    }
+
+    // Sort clouds by start and by end
+    const cloudsByStart = clouds.slice().sort((a, b) => a.start - b.start);
+    const cloudsByEnd = clouds.slice().sort((a, b) => a.end - b.end);
+
+    let si = 0, ei = 0;
+    const active = new Set();
+    const onlyCoveredBy = Array(m).fill(0);
+    let alwaysSunny = 0;
+
+    for (let i = 0; i < towns.length; i++) {
+        const [loc, pop] = towns[i];
+
+        // Add all clouds starting before or at this location
+        while (si < m && cloudsByStart[si].start <= loc) {
+            active.add(cloudsByStart[si].id);
+            si++;
+        }
+
+        // Remove clouds that ended before this location
+        while (ei < m && cloudsByEnd[ei].end < loc) {
+            active.delete(cloudsByEnd[ei].id);
+            ei++;
+        }
+
+        if (active.size === 0) {
+            alwaysSunny += pop;
+        } else if (active.size === 1) {
+            const cloudId = Array.from(active)[0];
+            onlyCoveredBy[cloudId] += pop;
+        }
+    }
+
+    const maxSingle = Math.max(0, ...onlyCoveredBy);
+    return alwaysSunny + maxSingle;
+}
+
+// ---------- HackerRank I/O Handling ----------
+process.stdin.resume();
+process.stdin.setEncoding('utf-8');
+let inputString = '';
+process.stdin.on('data', inputStdin => inputString += inputStdin);
+process.stdin.on('end', _ => {
+    inputString = inputString.trim().split(/\s+/).map(Number);
+    let idx = 0;
+
+    const n = inputString[idx++];
+    const p = [];
+    for (let i = 0; i < n; i++) p.push(inputString[idx++]);
+    const x = [];
+    for (let i = 0; i < n; i++) x.push(inputString[idx++]);
+    const m = inputString[idx++];
+    const y = [];
+    for (let j = 0; j < m; j++) y.push(inputString[idx++]);
+    const r = [];
+    for (let j = 0; j < m; j++) r.push(inputString[idx++]);
+
+    const result = maximumPeople(p, x, y, r);
+    console.log(result);
+});
